@@ -1,0 +1,63 @@
+/** Embedded copy of ch_converter/samples/logs-prod.mapping.json for the "Load sample" button. */
+export const SAMPLE_INDEX_NAME = 'logs_prod';
+
+export const SAMPLE_MAPPING_TEXT = JSON.stringify(
+  {
+    'logs-prod': {
+      mappings: {
+        dynamic: 'true',
+        dynamic_templates: [
+          {
+            strings_as_keyword: {
+              match_mapping_type: 'string',
+              mapping: { type: 'keyword' },
+            },
+          },
+        ],
+        runtime: {
+          day_of_week: { type: 'keyword' },
+        },
+        properties: {
+          '@timestamp': { type: 'date' },
+          message: { type: 'text' },
+          level: { type: 'keyword' },
+          trace_id: { type: 'keyword' },
+          status_code: { type: 'integer' },
+          bytes_total: { type: 'long' },
+          duration_ms: { type: 'double' },
+          is_error: { type: 'boolean' },
+          client_ip: { type: 'ip' },
+          service: {
+            properties: {
+              name: { type: 'keyword' },
+              version: { type: 'keyword' },
+            },
+          },
+          host: {
+            type: 'text',
+            fields: { raw: { type: 'keyword' } },
+          },
+          metrics: {
+            properties: {
+              cpu: { type: 'double' },
+              mem: { type: 'double' },
+              latency_ms: { type: 'double' },
+            },
+          },
+          tags: {
+            type: 'nested',
+            properties: {
+              key: { type: 'keyword' },
+              value: { type: 'keyword' },
+              score: { type: 'long' },
+            },
+          },
+          labels: { type: 'object', dynamic: 'true' },
+          internal_blob: { type: 'object', enabled: false },
+        },
+      },
+    },
+  },
+  null,
+  2,
+);
