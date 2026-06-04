@@ -1,4 +1,5 @@
 import Editor from '@monaco-editor/react';
+import { useTheme } from '@/lib/useTheme';
 
 interface SqlViewerProps {
   value: string;
@@ -6,12 +7,13 @@ interface SqlViewerProps {
 }
 
 export function SqlViewer({ value, height = 420 }: SqlViewerProps) {
+  const { theme } = useTheme();
   return (
     <div className="overflow-hidden rounded-lg border border-ch-border">
       <Editor
         height={height}
         defaultLanguage="sql"
-        theme="vs-dark"
+        theme={theme === 'light' ? 'vs' : 'vs-dark'}
         value={value}
         options={{
           readOnly: true,

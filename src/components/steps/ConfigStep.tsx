@@ -5,6 +5,8 @@ import { KeyValueEditor } from '../config/KeyValueEditor';
 import { IndexSpecEditor } from '../config/IndexSpecEditor';
 import { FieldSelect } from '../config/FieldSelect';
 import { NumberSelect } from '../config/NumberSelect';
+import { ObjectStrategyEditor } from '../config/ObjectStrategyEditor';
+import { PartitionPreset } from '../config/PartitionPreset';
 import { fieldsFromText } from '@/lib/extractFields';
 import { useWizardStore } from '@/store/wizardStore';
 
@@ -12,7 +14,11 @@ const ENGINES = ['MergeTree', 'ReplacingMergeTree', 'SummingMergeTree', 'Aggrega
 
 export function ConfigStep() {
   const { mappingText, config, patchConfig } = useWizardStore();
-  const { paths, dateFields } = useMemo(() => fieldsFromText(mappingText), [mappingText]);
+  const { paths, dateFields, objectRoots } = useMemo(
+    () => fieldsFromText(mappingText),
+    [mappingText],
+  );
+  const timestampField = config.timestamp_field ?? dateFields[0] ?? '@timestamp';
 
   return (
     <div className="space-y-4">
@@ -38,6 +44,12 @@ export function ConfigStep() {
           placeholder={dateFields[0] ?? '@timestamp'}
           onChange={(timestamp_field) => patchConfig({ timestamp_field })}
         />
+        <PartitionPreset
+          partitionBy={config.partition_by}
+          timestampField={timestampField}
+          hint={`Presets build the expression from '${timestampField}'. Pick Custom to write raw SQL below.`}
+          onChange={(partition_by) => patchConfig({ partition_by })}
+        />
         <FieldSelect
           label="PARTITION BY (raw SQL)"
           hint="e.g. toYYYYMM(`@timestamp`). Enables cheap drop of old partitions."
@@ -47,6 +59,23 @@ export function ConfigStep() {
           onChange={(partition_by) => patchConfig({ partition_by })}
         />
       </ConfigSection>
+
+      {objectRoots.length > 0 && (
+        <ConfigSection
+          title="Object fields"
+          subtitle="How nested objects become columns"
+          defaultOpen
+        >
+          <ObjectStrategyEditor
+            objectRoots={objectRoots}
+            json_fields={config.json_fields}
+            map_fields={config.map_fields}
+            nested_fields={config.nested_fields}
+            hint="Flatten (default) -> root_child columns. JSON -> one JSON column. Map -> Map(String, String). Nested -> typed Nested(...) parallel arrays."
+            onChange={(patch) => patchConfig(patch)}
+          />
+        </ConfigSection>
+      )}
 
       {/* Tier 2 — high value */}
       <ConfigSection title="Types & cardinality" subtitle="Storage and speed wins">

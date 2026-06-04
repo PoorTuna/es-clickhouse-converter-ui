@@ -1,4 +1,5 @@
 import { Database } from 'lucide-react';
+import { ThemeToggle } from './ThemeToggle';
 
 export function Header() {
   return (
@@ -15,7 +16,10 @@ export function Header() {
             Elasticsearch _mapping to ClickHouse DDL
           </span>
         </div>
-        <div className="ml-auto h-1.5 w-24 rounded-full bg-ch-yellow/80" aria-hidden />
+        <div className="ml-auto flex items-center gap-3">
+          <div className="hidden h-1.5 w-24 rounded-full bg-ch-yellow/80 sm:block" aria-hidden />
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

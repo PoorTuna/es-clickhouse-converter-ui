@@ -23,6 +23,7 @@ export interface WizardConfig {
   indexes: IndexSpec[];
   materialized: Record<string, string>;
   map_fields: Record<string, string>;
+  nested_fields: string[];
   not_null: string[];
   engine: string;
   date_precision: 3 | 6 | 9;
@@ -40,6 +41,7 @@ export const DEFAULT_CONFIG: WizardConfig = {
   indexes: [],
   materialized: {},
   map_fields: {},
+  nested_fields: [],
   not_null: [],
   engine: 'MergeTree',
   date_precision: 3,

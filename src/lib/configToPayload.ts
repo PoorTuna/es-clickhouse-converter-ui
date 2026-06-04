@@ -18,6 +18,7 @@ export function configToPayload(config: WizardConfig): Record<string, unknown> |
   addArray('low_cardinality', config.low_cardinality);
   addArray('counter_fields', config.counter_fields);
   addArray('json_fields', config.json_fields);
+  addArray('nested_fields', config.nested_fields);
   addArray('not_null', config.not_null);
 
   addDict('type_overrides', config.type_overrides);

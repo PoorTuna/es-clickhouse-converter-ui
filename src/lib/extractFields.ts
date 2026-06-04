@@ -6,6 +6,9 @@
 export interface ExtractedFields {
   paths: string[];
   dateFields: string[];
+  /** Plain-object roots (no `type`, or `type: object`) that otherwise flatten
+   *  to `root_child` columns — candidates for a JSON/Map/Nested route. */
+  objectRoots: string[];
 }
 
 type EsNode = Record<string, unknown>;
@@ -28,13 +31,20 @@ function locateProperties(raw: unknown): EsNode {
   return {};
 }
 
-function walk(props: EsNode, prefix: string, paths: string[], dateFields: string[]): void {
+function walk(
+  props: EsNode,
+  prefix: string,
+  paths: string[],
+  dateFields: string[],
+  objectRoots: string[],
+): void {
   for (const [name, raw] of Object.entries(props ?? {})) {
     const node = (raw ?? {}) as EsNode;
     const path = prefix ? `${prefix}.${name}` : name;
     // Plain objects (no `type`) recurse into their sub-properties.
     if (node.properties && node.type !== 'nested') {
-      walk(node.properties as EsNode, path, paths, dateFields);
+      objectRoots.push(path);
+      walk(node.properties as EsNode, path, paths, dateFields, objectRoots);
       continue;
     }
     paths.push(path);
@@ -46,8 +56,9 @@ export function extractFields(raw: unknown): ExtractedFields {
   const props = locateProperties(raw);
   const paths: string[] = [];
   const dateFields: string[] = [];
-  walk(props, '', paths, dateFields);
-  return { paths, dateFields };
+  const objectRoots: string[] = [];
+  walk(props, '', paths, dateFields, objectRoots);
+  return { paths, dateFields, objectRoots };
 }
 
 /** Parse mapping text safely; returns null on invalid JSON. */
@@ -62,5 +73,5 @@ export function parseMapping(text: string): unknown | null {
 /** Convenience: extract field paths straight from raw mapping text. */
 export function fieldsFromText(text: string): ExtractedFields {
   const parsed = parseMapping(text);
-  return parsed ? extractFields(parsed) : { paths: [], dateFields: [] };
+  return parsed ? extractFields(parsed) : { paths: [], dateFields: [], objectRoots: [] };
 }

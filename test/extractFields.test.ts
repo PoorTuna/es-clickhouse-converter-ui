@@ -30,9 +30,10 @@ describe('extractFields', () => {
         ts: { type: 'date_nanos' },
       },
     };
-    const { paths, dateFields } = extractFields(raw);
+    const { paths, dateFields, objectRoots } = extractFields(raw);
     expect(paths).toEqual(['service.name', 'service.version', 'ts']);
     expect(dateFields).toEqual(['ts']);
+    expect(objectRoots).toEqual(['service']);
   });
 
   it('treats nested type as a leaf, not an object to descend', () => {
@@ -42,8 +43,22 @@ describe('extractFields', () => {
     expect(extractFields(raw).paths).toEqual(['tags']);
   });
 
+  it('lists nested object roots at every depth', () => {
+    const raw = {
+      properties: {
+        product: {
+          properties: {
+            logs: { type: 'keyword' },
+            meta: { properties: { sku: { type: 'keyword' } } },
+          },
+        },
+      },
+    };
+    expect(extractFields(raw).objectRoots).toEqual(['product', 'product.meta']);
+  });
+
   it('returns empty for junk input', () => {
-    expect(extractFields(null)).toEqual({ paths: [], dateFields: [] });
-    expect(extractFields(42)).toEqual({ paths: [], dateFields: [] });
+    expect(extractFields(null)).toEqual({ paths: [], dateFields: [], objectRoots: [] });
+    expect(extractFields(42)).toEqual({ paths: [], dateFields: [], objectRoots: [] });
   });
 });

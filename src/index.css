@@ -10,8 +10,42 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* Theme tokens as space-separated RGB channels (consumed by tailwind.config.ts
+   via rgb(var(--ch-*) / <alpha>)). Dark is the default; [data-theme='light']
+   on <html> swaps the palette. */
+:root,
+html[data-theme='dark'] {
   color-scheme: dark;
+  --ch-bg: 28 28 28;
+  --ch-panel: 36 36 36;
+  --ch-panel-2: 44 44 44;
+  --ch-border: 56 56 56;
+  --ch-yellow: 250 255 105;
+  --ch-yellow-dim: 214 219 74;
+  --ch-text: 236 236 236;
+  --ch-muted: 154 154 154;
+  --ch-warning: 245 166 35;
+  --ch-suggestion: 90 176 255;
+  --ch-danger: 255 107 107;
+  --ch-scrollbar: 74 74 74;
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+  --ch-bg: 255 255 255;
+  --ch-panel: 246 246 246;
+  --ch-panel-2: 236 236 236;
+  --ch-border: 214 214 214;
+  /* Brand yellow is unreadable as text on white, so accents use a deeper gold;
+     the logo chip / accent bars still read as ClickHouse yellow. */
+  --ch-yellow: 176 138 0;
+  --ch-yellow-dim: 140 110 0;
+  --ch-text: 26 26 26;
+  --ch-muted: 90 90 90;
+  --ch-warning: 176 110 0;
+  --ch-suggestion: 0 110 220;
+  --ch-danger: 200 40 40;
+  --ch-scrollbar: 190 190 190;
 }
 
 html,
@@ -25,16 +59,16 @@ body {
   margin: 0;
 }
 
-/* Thin dark scrollbars to match the panels */
+/* Thin scrollbars matching the active theme */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #4a4a4a transparent;
+  scrollbar-color: rgb(var(--ch-scrollbar)) transparent;
 }
 *::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #4a4a4a;
+  background: rgb(var(--ch-scrollbar));
   border-radius: 6px;
 }

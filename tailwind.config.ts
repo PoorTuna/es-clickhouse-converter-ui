@@ -5,18 +5,21 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Driven by CSS variables (see index.css) so the dark/light toggle can
+        // re-theme everything. Channels are space-separated RGB to keep the
+        // Tailwind `/<alpha>` opacity utilities working.
         ch: {
-          bg: '#1c1c1c',
-          panel: '#242424',
-          'panel-2': '#2c2c2c',
-          border: '#383838',
-          yellow: '#FAFF69',
-          'yellow-dim': '#d6db4a',
-          text: '#ECECEC',
-          muted: '#9A9A9A',
-          warning: '#F5A623',
-          suggestion: '#5AB0FF',
-          danger: '#FF6B6B',
+          bg: 'rgb(var(--ch-bg) / <alpha-value>)',
+          panel: 'rgb(var(--ch-panel) / <alpha-value>)',
+          'panel-2': 'rgb(var(--ch-panel-2) / <alpha-value>)',
+          border: 'rgb(var(--ch-border) / <alpha-value>)',
+          yellow: 'rgb(var(--ch-yellow) / <alpha-value>)',
+          'yellow-dim': 'rgb(var(--ch-yellow-dim) / <alpha-value>)',
+          text: 'rgb(var(--ch-text) / <alpha-value>)',
+          muted: 'rgb(var(--ch-muted) / <alpha-value>)',
+          warning: 'rgb(var(--ch-warning) / <alpha-value>)',
+          suggestion: 'rgb(var(--ch-suggestion) / <alpha-value>)',
+          danger: 'rgb(var(--ch-danger) / <alpha-value>)',
         },
       },
       fontFamily: {

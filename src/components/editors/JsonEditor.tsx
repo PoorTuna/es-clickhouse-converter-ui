@@ -1,4 +1,5 @@
 import Editor from '@monaco-editor/react';
+import { useTheme } from '@/lib/useTheme';
 
 interface JsonEditorProps {
   value: string;
@@ -7,12 +8,13 @@ interface JsonEditorProps {
 }
 
 export function JsonEditor({ value, onChange, height = 360 }: JsonEditorProps) {
+  const { theme } = useTheme();
   return (
     <div className="overflow-hidden rounded-lg border border-ch-border">
       <Editor
         height={height}
         defaultLanguage="json"
-        theme="vs-dark"
+        theme={theme === 'light' ? 'vs' : 'vs-dark'}
         value={value}
         onChange={(v) => onChange(v ?? '')}
         options={{
