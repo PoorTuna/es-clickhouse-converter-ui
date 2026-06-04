@@ -12,5 +12,8 @@ services:
     build: .
     ports:
       - "8080:80"
+    environment:
+      # Backend address nginx proxies to (default is this Compose service).
+      CONVERTER_BACKEND_URL: http://converter:8000
     depends_on:
       - converter

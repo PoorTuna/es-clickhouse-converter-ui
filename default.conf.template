@@ -1,0 +1,32 @@
+# Rendered to /etc/nginx/conf.d/default.conf at container start by the nginx
+# image's envsubst entrypoint. Only ${CONVERTER_BACKEND_URL} is substituted
+# (see NGINX_ENVSUBST_FILTER in the Dockerfile); nginx's own $host/$uri/etc.
+# are left untouched.
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # SPA fallback.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Reverse-proxy API calls to the converter backend. The backend address is
+    # taken from CONVERTER_BACKEND_URL (default http://converter:8000) and
+    # resolved lazily via Docker's embedded DNS, so the container starts even
+    # when the backend is not yet reachable.
+    location /convert {
+        resolver 127.0.0.11 ipv6=off valid=10s;
+        set $converter_backend "${CONVERTER_BACKEND_URL}";
+        proxy_pass $converter_backend$request_uri;
+        proxy_set_header Host $host;
+    }
+    location /health {
+        resolver 127.0.0.11 ipv6=off valid=10s;
+        set $converter_backend "${CONVERTER_BACKEND_URL}";
+        proxy_pass $converter_backend$request_uri;
+        proxy_set_header Host $host;
+    }
+}

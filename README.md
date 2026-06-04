@@ -25,10 +25,10 @@ npm run dev
 ```
 
 The dev server runs on `http://localhost:5173` and proxies `/convert` and `/health` to the
-backend. Point it at a different backend with `VITE_BACKEND_URL`:
+backend. Point it at a different backend with `CONVERTER_BACKEND_URL`:
 
 ```bash
-VITE_BACKEND_URL=http://localhost:8000 npm run dev
+CONVERTER_BACKEND_URL=http://localhost:8000 npm run dev
 ```
 
 Because requests are proxied through Vite, the browser sees a single origin and the backend
@@ -64,10 +64,13 @@ Build a static image served by nginx:
 
 ```bash
 docker build -t ch-converter-ui .
-docker run --rm -p 8080:80 ch-converter-ui
+docker run --rm -p 8080:80 -e CONVERTER_BACKEND_URL=http://host.docker.internal:8000 ch-converter-ui
 ```
 
 nginx serves the built bundle and reverse-proxies `/convert` and `/health` to the backend.
+The backend address is set by `CONVERTER_BACKEND_URL` (default `http://converter:8000`) and
+substituted into the nginx config at container start, so the same image targets any backend
+without rebuilding.
 
 ### Connecting the UI to the backend
 
@@ -104,8 +107,8 @@ ui:
     - converter
 ```
 
-Any service reachable as `converter:8000` on the shared network satisfies the proxy; rename
-it by editing `nginx.conf`.
+Any backend reachable from the container satisfies the proxy; point at it with
+`CONVERTER_BACKEND_URL` (a Compose service name, `host.docker.internal`, or an external URL).
 
 ## License
 
