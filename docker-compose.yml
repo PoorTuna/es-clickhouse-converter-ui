@@ -1,0 +1,16 @@
+services:
+  converter:
+    build: ../ch_converter
+    environment:
+      LOG_LEVEL: INFO
+    # Port is not published: only the UI's nginx needs to reach it,
+    # over the Compose network as `converter:8000`.
+    expose:
+      - "8000"
+
+  ui:
+    build: .
+    ports:
+      - "8080:80"
+    depends_on:
+      - converter

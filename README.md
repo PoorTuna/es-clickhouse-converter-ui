@@ -1,47 +1,112 @@
-# ES → ClickHouse Converter UI
+# ch-converter-ui
 
-A ClickHouse-branded web wizard for the [`ch_converter`](../ch_converter) backend. Paste an
-Elasticsearch `_mapping`, tune the conversion config in a guided form, and watch the
-generated ClickHouse `CREATE TABLE` DDL update live.
+Web interface for [`ch_converter`](../ch_converter), the deterministic Elasticsearch
+`_mapping` → ClickHouse DDL converter. Paste a mapping, adjust the conversion settings in a
+guided form, and get a ready-to-run `CREATE TABLE` statement with inline warnings and
+tuning suggestions.
+
+The UI is a thin client: all conversion happens in the backend. The frontend parses the
+mapping locally only to populate field-name autocomplete.
 
 ## Stack
 
-Vite · React 18 · TypeScript · Tailwind · Monaco · TanStack Query · Zustand · Framer Motion.
+React 18, TypeScript, Vite, Tailwind CSS, Monaco editor, TanStack Query, Zustand.
 
-## Develop
+## Requirements
+
+- Node.js 20+
+- A running `ch_converter` backend (defaults to `http://localhost:8000`)
+
+## Development
 
 ```bash
-# 1. start the backend (in ../ch_converter)
-python -m ch_converter.main            # serves http://localhost:8000
-
-# 2. start the UI
 npm install
-npm run dev                            # http://localhost:5173
+npm run dev
 ```
 
-The Vite dev server proxies `/convert` and `/health` to the backend (default
-`http://localhost:8000`; override with `VITE_BACKEND_URL`). No CORS config needed in dev.
+The dev server runs on `http://localhost:5173` and proxies `/convert` and `/health` to the
+backend. Point it at a different backend with `VITE_BACKEND_URL`:
+
+```bash
+VITE_BACKEND_URL=http://localhost:8000 npm run dev
+```
+
+Because requests are proxied through Vite, the browser sees a single origin and the backend
+needs no CORS configuration.
 
 ## Scripts
 
-| Script            | Purpose                                                  |
-| ----------------- | -------------------------------------------------------- |
-| `npm run dev`     | Dev server with HMR + backend proxy                      |
-| `npm run build`   | Type-check and produce a static bundle in `dist/`        |
-| `npm run preview` | Serve the production build locally                       |
-| `npm run test`    | Run vitest (jsdom + msw)                                  |
-| `npm run gen:api` | Regenerate `src/api/schema.d.ts` from a live `/openapi.json` |
+| Script            | Description                                          |
+| ----------------- | ---------------------------------------------------- |
+| `npm run dev`     | Dev server with hot reload and backend proxy         |
+| `npm run build`   | Type-check and build the production bundle to `dist/` |
+| `npm run preview` | Serve the production build locally                   |
+| `npm run test`    | Run the test suite (Vitest)                          |
+| `npm run gen:api` | Regenerate API types from a running backend's `/openapi.json` |
 
-## Wizard
+## Workflow
 
-1. **Input** — paste / upload the `_mapping`, set the table name. Load the bundled sample.
-2. **Configure** — sorting, partitioning, types, codecs, indexes, materialized columns.
-   Field names autocomplete from the pasted mapping.
-3. **Result** — live DDL preview with copy / download, plus warnings and suggestions.
+1. **Input** — paste or upload the Elasticsearch `_mapping`, set the target table name.
+2. **Configure** — sort key, partitioning, `LowCardinality`, type and codec overrides, skip
+   indexes, and materialized columns. Field names autocomplete from the mapping.
+3. **Result** — the generated DDL, re-rendered as settings change, with copy and download
+   actions alongside the backend's warnings and suggestions.
 
-## Production / Docker
+## Offline use
 
-`docker build -t ch-converter-ui .` builds a static bundle served by nginx on port 80, with
-nginx proxying `/convert` and `/health` to the backend. To run alongside the backend, add a
-`ui` service to `../ch_converter/docker-compose.yml` (see the converter repo). For a
-non-proxied deploy, add CORS to the backend (`CORSMiddleware` in `ch_converter/main.py`).
+The application loads no third-party assets at runtime. The Monaco editor and its web
+workers are bundled by Vite, and the Inter and JetBrains Mono fonts are served from the
+package via `@fontsource`. The build is suitable for air-gapped environments.
+
+## Docker
+
+Build a static image served by nginx:
+
+```bash
+docker build -t ch-converter-ui .
+docker run --rm -p 8080:80 ch-converter-ui
+```
+
+nginx serves the built bundle and reverse-proxies `/convert` and `/health` to the backend.
+
+### Connecting the UI to the backend
+
+The browser never calls the backend directly. nginx inside the UI container forwards API
+requests to a service named `converter`, resolved over the Docker network:
+
+```
+browser ──▶ ch-converter-ui (nginx :80) ──▶ converter (:8000)
+              static bundle + /convert,/health proxy
+```
+
+This keeps everything on one origin (no CORS) and means the backend port does not need to
+be published to the host. The hostname is resolved lazily through Docker's embedded DNS, so
+the UI container also starts on its own — API calls simply return 502 until a `converter`
+service is reachable.
+
+Run both with the bundled Compose file (builds the backend from the sibling
+`../ch_converter` directory):
+
+```bash
+docker compose up --build
+# UI on http://localhost:8080
+```
+
+To attach the UI to an existing backend stack instead, add the service to that stack's
+`docker-compose.yml`:
+
+```yaml
+ui:
+  build: ../ch_converter_ui
+  ports:
+    - "8080:80"
+  depends_on:
+    - converter
+```
+
+Any service reachable as `converter:8000` on the shared network satisfies the proxy; rename
+it by editing `nginx.conf`.
+
+## License
+
+MIT
