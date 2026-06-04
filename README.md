@@ -1,4 +1,4 @@
-# ch-converter-ui
+# es-clickhouse-converter-ui
 
 Web interface for [`ch_converter`](../ch_converter), the deterministic Elasticsearch
 `_mapping` → ClickHouse DDL converter. Paste a mapping, adjust the conversion settings in a
@@ -63,8 +63,8 @@ package via `@fontsource`. The build is suitable for air-gapped environments.
 Build a static image served by nginx:
 
 ```bash
-docker build -t ch-converter-ui .
-docker run --rm -p 8080:80 -e CONVERTER_BACKEND_URL=http://host.docker.internal:8000 ch-converter-ui
+docker build -t es-clickhouse-converter-ui .
+docker run --rm -p 8080:80 -e CONVERTER_BACKEND_URL=http://host.docker.internal:8000 es-clickhouse-converter-ui
 ```
 
 nginx serves the built bundle and reverse-proxies `/convert` and `/health` to the backend.
@@ -78,7 +78,7 @@ The browser never calls the backend directly. nginx inside the UI container forw
 requests to a service named `converter`, resolved over the Docker network:
 
 ```
-browser ──▶ ch-converter-ui (nginx :80) ──▶ converter (:8000)
+browser ──▶ es-clickhouse-converter-ui (nginx :80) ──▶ converter (:8000)
               static bundle + /convert,/health proxy
 ```
 

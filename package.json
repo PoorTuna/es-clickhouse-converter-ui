@@ -1,5 +1,5 @@
 {
-  "name": "ch-converter-ui",
+  "name": "es-clickhouse-converter-ui",
   "version": "0.1.0",
   "private": true,
   "type": "module",
