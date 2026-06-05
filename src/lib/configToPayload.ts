@@ -19,6 +19,7 @@ export function configToPayload(config: WizardConfig): Record<string, unknown> |
   addArray('counter_fields', config.counter_fields);
   addArray('json_fields', config.json_fields);
   addArray('nested_fields', config.nested_fields);
+  addArray('flatten_fields', config.flatten_fields);
   addArray('not_null', config.not_null);
 
   addDict('type_overrides', config.type_overrides);

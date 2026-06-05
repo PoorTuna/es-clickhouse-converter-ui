@@ -1,17 +1,53 @@
 /**
- * Client-side ES _mapping walker. Mirrors the backend parser enough to drive
- * field-name autocomplete in the config form. The backend stays the source of
- * truth on convert; this is UX-only.
+ * Client-side ES _mapping walker. Mirrors the backend parser (`_dynamic.py`,
+ * `_parser.py`) enough to drive field-name autocomplete and show the routing
+ * the backend will actually apply. The backend stays the source of truth on
+ * convert; this is UX-only.
  */
 export interface ExtractedFields {
+  /** Leaf paths that become real top-level columns (flatten leaves + nested
+   *  sub-columns addressable as `group.child`). Excludes JSON-subtree leaves,
+   *  which collapse into one JSON column the DDL never breaks back out. */
   paths: string[];
   dateFields: string[];
-  /** Plain-object roots (no `type`, or `type: object`) that otherwise flatten
-   *  to `root_child` columns — candidates for a JSON/Map/Nested route. */
+  /** Plain-object roots that flatten to `root_child` columns — the only roots
+   *  the user can re-route (JSON/Map/Nested) via config. */
   objectRoots: string[];
+  /** `dynamic: true`/`runtime` or `enabled: false` objects the backend forces
+   *  into a single JSON column. */
+  jsonRoots: string[];
+  /** `type: nested` objects the backend forces into a `Nested(...)` column. */
+  nestedRoots: string[];
 }
 
 type EsNode = Record<string, unknown>;
+
+interface Accumulator {
+  paths: string[];
+  dateFields: string[];
+  objectRoots: string[];
+  jsonRoots: string[];
+  nestedRoots: string[];
+}
+
+const DYNAMIC_JSON_VALUES = new Set(['true', 'runtime']);
+
+/** Mirror of backend `routes_to_json`: an open-ended subtree → JSON column. */
+function routesToJson(node: EsNode): boolean {
+  const dynamic = node.dynamic;
+  if (typeof dynamic === 'boolean') return dynamic;
+  if (typeof dynamic === 'string') return DYNAMIC_JSON_VALUES.has(dynamic.toLowerCase());
+  return node.enabled === false;
+}
+
+/** Mirror of backend `is_nested`: a fixed-schema array of sub-documents. */
+function isNested(node: EsNode): boolean {
+  return node.type === 'nested';
+}
+
+function hasProperties(node: EsNode): node is EsNode & { properties: EsNode } {
+  return typeof node.properties === 'object' && node.properties !== null;
+}
 
 /**
  * Accepts the three shapes the backend accepts:
@@ -31,34 +67,56 @@ function locateProperties(raw: unknown): EsNode {
   return {};
 }
 
-function walk(
-  props: EsNode,
-  prefix: string,
-  paths: string[],
-  dateFields: string[],
-  objectRoots: string[],
-): void {
+/** Scalar leaves under a `type: nested` subtree, addressable as `group.child`
+ *  (the backend flattens inner objects into the same Nested group). */
+function collectNestedLeaves(props: EsNode, prefix: string, acc: Accumulator): void {
   for (const [name, raw] of Object.entries(props ?? {})) {
     const node = (raw ?? {}) as EsNode;
-    const path = prefix ? `${prefix}.${name}` : name;
-    // Plain objects (no `type`) recurse into their sub-properties.
-    if (node.properties && node.type !== 'nested') {
-      objectRoots.push(path);
-      walk(node.properties as EsNode, path, paths, dateFields, objectRoots);
+    const path = `${prefix}.${name}`;
+    if (routesToJson(node)) {
+      acc.jsonRoots.push(path);
       continue;
     }
-    paths.push(path);
-    if (node.type === 'date' || node.type === 'date_nanos') dateFields.push(path);
+    if (hasProperties(node)) {
+      collectNestedLeaves(node.properties, path, acc);
+      continue;
+    }
+    acc.paths.push(path);
   }
 }
 
+function walk(props: EsNode, prefix: string, acc: Accumulator): void {
+  for (const [name, raw] of Object.entries(props ?? {})) {
+    const node = (raw ?? {}) as EsNode;
+    const path = prefix ? `${prefix}.${name}` : name;
+
+    if (routesToJson(node)) {
+      acc.jsonRoots.push(path);
+      continue;
+    }
+    if (isNested(node)) {
+      acc.nestedRoots.push(path);
+      if (hasProperties(node)) collectNestedLeaves(node.properties, path, acc);
+      continue;
+    }
+    if (hasProperties(node)) {
+      acc.objectRoots.push(path);
+      walk(node.properties, path, acc);
+      continue;
+    }
+    acc.paths.push(path);
+    if (node.type === 'date' || node.type === 'date_nanos') acc.dateFields.push(path);
+  }
+}
+
+function emptyFields(): ExtractedFields {
+  return { paths: [], dateFields: [], objectRoots: [], jsonRoots: [], nestedRoots: [] };
+}
+
 export function extractFields(raw: unknown): ExtractedFields {
-  const props = locateProperties(raw);
-  const paths: string[] = [];
-  const dateFields: string[] = [];
-  const objectRoots: string[] = [];
-  walk(props, '', paths, dateFields, objectRoots);
-  return { paths, dateFields, objectRoots };
+  const acc: Accumulator = emptyFields();
+  walk(locateProperties(raw), '', acc);
+  return acc;
 }
 
 /** Parse mapping text safely; returns null on invalid JSON. */
@@ -73,5 +131,5 @@ export function parseMapping(text: string): unknown | null {
 /** Convenience: extract field paths straight from raw mapping text. */
 export function fieldsFromText(text: string): ExtractedFields {
   const parsed = parseMapping(text);
-  return parsed ? extractFields(parsed) : { paths: [], dateFields: [], objectRoots: [] };
+  return parsed ? extractFields(parsed) : emptyFields();
 }

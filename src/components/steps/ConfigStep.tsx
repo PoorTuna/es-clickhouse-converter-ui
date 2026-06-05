@@ -5,7 +5,7 @@ import { KeyValueEditor } from '../config/KeyValueEditor';
 import { IndexSpecEditor } from '../config/IndexSpecEditor';
 import { FieldSelect } from '../config/FieldSelect';
 import { NumberSelect } from '../config/NumberSelect';
-import { ObjectStrategyEditor } from '../config/ObjectStrategyEditor';
+import { ObjectStrategyEditor, type RoutableRoot } from '../config/ObjectStrategyEditor';
 import { PartitionPreset } from '../config/PartitionPreset';
 import { fieldsFromText } from '@/lib/extractFields';
 import { useWizardStore } from '@/store/wizardStore';
@@ -14,11 +14,21 @@ const ENGINES = ['MergeTree', 'ReplacingMergeTree', 'SummingMergeTree', 'Aggrega
 
 export function ConfigStep() {
   const { mappingText, config, patchConfig } = useWizardStore();
-  const { paths, dateFields, objectRoots } = useMemo(
+  const { paths, dateFields, objectRoots, jsonRoots, nestedRoots } = useMemo(
     () => fieldsFromText(mappingText),
     [mappingText],
   );
   const timestampField = config.timestamp_field ?? dateFields[0] ?? '@timestamp';
+  // Object roots are the real targets of JSON/Map/type routing, but never land
+  // in `paths` (only their leaves do) — offer both so `product` autocompletes.
+  const rootOptions = [...objectRoots, ...jsonRoots, ...nestedRoots, ...paths];
+  // One routable row per object root, pre-set to the strategy ES dictates.
+  const routableRoots: RoutableRoot[] = [
+    ...objectRoots.map((path) => ({ path, detected: 'flatten' as const, source: 'object' as const })),
+    ...jsonRoots.map((path) => ({ path, detected: 'json' as const, source: 'object' as const })),
+    ...nestedRoots.map((path) => ({ path, detected: 'nested' as const, source: 'array' as const })),
+  ];
+  const hasObjectRoots = routableRoots.length > 0;
 
   return (
     <div className="space-y-4">
@@ -60,18 +70,19 @@ export function ConfigStep() {
         />
       </ConfigSection>
 
-      {objectRoots.length > 0 && (
+      {hasObjectRoots && (
         <ConfigSection
           title="Object fields"
           subtitle="How nested objects become columns"
           defaultOpen
         >
           <ObjectStrategyEditor
-            objectRoots={objectRoots}
+            roots={routableRoots}
             json_fields={config.json_fields}
             map_fields={config.map_fields}
             nested_fields={config.nested_fields}
-            hint="Flatten (default) -> root_child columns. JSON -> one JSON column. Map -> Map(String, String). Nested -> typed Nested(...) parallel arrays."
+            flatten_fields={config.flatten_fields}
+            hint="ES-detected routing (JSON/Nested) is the default — override it freely. Flatten -> root_child columns. JSON -> one JSON column (typed hints, stays dynamic). Map -> Map(String, …). Nested -> parallel arrays."
             onChange={(patch) => patchConfig(patch)}
           />
         </ConfigSection>
@@ -90,7 +101,7 @@ export function ConfigStep() {
           label="Type overrides"
           hint="Pin a field to a ClickHouse type, e.g. status_code → UInt16."
           value={config.type_overrides}
-          keyOptions={paths}
+          keyOptions={rootOptions}
           valuePlaceholder="UInt16"
           onChange={(type_overrides) => patchConfig({ type_overrides })}
         />
@@ -105,7 +116,7 @@ export function ConfigStep() {
           label="JSON catch-all fields"
           hint="Force these (plus auto-detected dynamic ones) into JSON columns."
           values={config.json_fields}
-          options={paths}
+          options={rootOptions}
           onChange={(json_fields) => patchConfig({ json_fields })}
         />
       </ConfigSection>
@@ -158,7 +169,7 @@ export function ConfigStep() {
           label="Map fields"
           hint="Force a field into a Map column; value is the Map value type."
           value={config.map_fields}
-          keyOptions={paths}
+          keyOptions={rootOptions}
           valuePlaceholder="Float64"
           onChange={(map_fields) => patchConfig({ map_fields })}
         />

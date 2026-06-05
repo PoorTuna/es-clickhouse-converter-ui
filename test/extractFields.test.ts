@@ -36,11 +36,27 @@ describe('extractFields', () => {
     expect(objectRoots).toEqual(['service']);
   });
 
-  it('treats nested type as a leaf, not an object to descend', () => {
+  it('routes a nested type to a Nested root with dotted sub-column paths', () => {
     const raw = {
       properties: { tags: { type: 'nested', properties: { key: { type: 'keyword' } } } },
     };
-    expect(extractFields(raw).paths).toEqual(['tags']);
+    const { paths, nestedRoots, objectRoots } = extractFields(raw);
+    expect(nestedRoots).toEqual(['tags']);
+    expect(paths).toEqual(['tags.key']);
+    expect(objectRoots).toEqual([]);
+  });
+
+  it('routes a dynamic object to a JSON root without leaking its leaves', () => {
+    const raw = {
+      properties: {
+        product: { type: 'object', dynamic: 'true', properties: { sku: { type: 'keyword' } } },
+        blob: { type: 'object', enabled: false },
+      },
+    };
+    const { paths, jsonRoots, objectRoots } = extractFields(raw);
+    expect(jsonRoots).toEqual(['product', 'blob']);
+    expect(paths).toEqual([]);
+    expect(objectRoots).toEqual([]);
   });
 
   it('lists nested object roots at every depth', () => {
@@ -58,7 +74,8 @@ describe('extractFields', () => {
   });
 
   it('returns empty for junk input', () => {
-    expect(extractFields(null)).toEqual({ paths: [], dateFields: [], objectRoots: [] });
-    expect(extractFields(42)).toEqual({ paths: [], dateFields: [], objectRoots: [] });
+    const empty = { paths: [], dateFields: [], objectRoots: [], jsonRoots: [], nestedRoots: [] };
+    expect(extractFields(null)).toEqual(empty);
+    expect(extractFields(42)).toEqual(empty);
   });
 });

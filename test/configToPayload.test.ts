@@ -34,4 +34,11 @@ describe('configToPayload', () => {
     });
     expect(payload).toEqual({ engine: 'ReplacingMergeTree', date_precision: 9 });
   });
+
+  it('forwards flatten_fields when set, prunes it when empty', () => {
+    expect(configToPayload({ ...DEFAULT_CONFIG, flatten_fields: ['product'] })).toEqual({
+      flatten_fields: ['product'],
+    });
+    expect(configToPayload({ ...DEFAULT_CONFIG, flatten_fields: [] })).toBeNull();
+  });
 });
