@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Header } from './components/Header';
+import { OfflineBanner } from './components/OfflineBanner';
 import { Stepper } from './components/Stepper';
 import { Footer } from './components/Footer';
 import { InputStep } from './components/steps/InputStep';
@@ -13,6 +14,7 @@ export default function App() {
   return (
     <div className="flex min-h-full flex-col">
       <Header />
+      <OfflineBanner />
       <Stepper />
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 pb-10">
         <AnimatePresence mode="wait">

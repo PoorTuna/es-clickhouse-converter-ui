@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { SAMPLE_INDEX_NAME, SAMPLE_MAPPING_TEXT } from '@/lib/sampleMapping';
 
 export type Step = 'input' | 'config' | 'result';
@@ -66,25 +67,33 @@ interface WizardState {
   reset: () => void;
 }
 
-export const useWizardStore = create<WizardState>((set, get) => ({
-  step: 'input',
-  indexName: '',
-  mappingText: '',
-  config: DEFAULT_CONFIG,
-  setStep: (step) => set({ step }),
-  next: () => {
-    const i = STEP_ORDER.indexOf(get().step);
-    if (i < STEP_ORDER.length - 1) set({ step: STEP_ORDER[i + 1] });
-  },
-  back: () => {
-    const i = STEP_ORDER.indexOf(get().step);
-    if (i > 0) set({ step: STEP_ORDER[i - 1] });
-  },
-  setMappingText: (mappingText) => set({ mappingText }),
-  setIndexName: (indexName) => set({ indexName }),
-  patchConfig: (partial) => set((s) => ({ config: { ...s.config, ...partial } })),
-  loadSample: () =>
-    set({ mappingText: SAMPLE_MAPPING_TEXT, indexName: SAMPLE_INDEX_NAME }),
-  reset: () =>
-    set({ step: 'input', indexName: '', mappingText: '', config: DEFAULT_CONFIG }),
-}));
+export const useWizardStore = create<WizardState>()(
+  persist(
+    (set, get) => ({
+      step: 'input',
+      indexName: '',
+      mappingText: '',
+      config: DEFAULT_CONFIG,
+      setStep: (step) => set({ step }),
+      next: () => {
+        const i = STEP_ORDER.indexOf(get().step);
+        if (i < STEP_ORDER.length - 1) set({ step: STEP_ORDER[i + 1] });
+      },
+      back: () => {
+        const i = STEP_ORDER.indexOf(get().step);
+        if (i > 0) set({ step: STEP_ORDER[i - 1] });
+      },
+      setMappingText: (mappingText) => set({ mappingText }),
+      setIndexName: (indexName) => set({ indexName }),
+      patchConfig: (partial) => set((s) => ({ config: { ...s.config, ...partial } })),
+      loadSample: () => set({ mappingText: SAMPLE_MAPPING_TEXT, indexName: SAMPLE_INDEX_NAME }),
+      reset: () => set({ step: 'input', indexName: '', mappingText: '', config: DEFAULT_CONFIG }),
+    }),
+    {
+      name: 'ch-converter-wizard',
+      version: 1,
+      // The active step is transient; only the user's work is worth restoring.
+      partialize: ({ indexName, mappingText, config }) => ({ indexName, mappingText, config }),
+    },
+  ),
+);

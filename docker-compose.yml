@@ -6,13 +6,13 @@ services:
     # Port is not published: only the UI's nginx needs to reach it,
     # over the Compose network as `converter:8000`.
     expose:
-      - "8000"
+      - '8000'
 
   ui:
     build: .
     ports:
       # Container now serves on 8080 (unprivileged nginx).
-      - "8080:8080"
+      - '8080:8080'
     environment:
       # Backend address nginx proxies to (default is this Compose service).
       CONVERTER_BACKEND_URL: http://converter:8000

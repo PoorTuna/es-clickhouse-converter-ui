@@ -1,4 +1,9 @@
-import { forwardRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
+import {
+  forwardRef,
+  type ButtonHTMLAttributes,
+  type InputHTMLAttributes,
+  type ReactNode,
+} from 'react';
 import { cn } from '@/lib/cn';
 
 type ButtonVariant = 'primary' | 'ghost' | 'outline';
@@ -32,12 +37,7 @@ Button.displayName = 'Button';
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div
-      className={cn(
-        'rounded-xl border border-ch-border bg-ch-panel shadow-panel',
-        className,
-      )}
-    >
+    <div className={cn('rounded-xl border border-ch-border bg-ch-panel shadow-panel', className)}>
       {children}
     </div>
   );
@@ -66,6 +66,10 @@ export function Label({ children, htmlFor }: { children: ReactNode; htmlFor?: st
   );
 }
 
-export function Hint({ children }: { children: ReactNode }) {
-  return <p className="mt-1 text-xs text-ch-muted">{children}</p>;
+export function Hint({ id, children }: { id?: string; children: ReactNode }) {
+  return (
+    <p id={id} className="mt-1 text-xs text-ch-muted">
+      {children}
+    </p>
+  );
 }

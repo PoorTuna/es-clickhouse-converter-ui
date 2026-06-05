@@ -31,7 +31,11 @@ interface ObjectStrategyEditorProps extends ObjectBuckets {
   onChange: (patch: Partial<ObjectBuckets>) => void;
 }
 
-function strategyOf(path: string, detected: ObjectStrategy, buckets: ObjectBuckets): ObjectStrategy {
+function strategyOf(
+  path: string,
+  detected: ObjectStrategy,
+  buckets: ObjectBuckets,
+): ObjectStrategy {
   if (buckets.json_fields.includes(path)) return 'json';
   if (path in buckets.map_fields) return 'map';
   if (buckets.nested_fields.includes(path)) return 'nested';

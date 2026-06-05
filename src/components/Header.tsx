@@ -12,9 +12,7 @@ export function Header() {
           <span className="text-sm font-semibold text-ch-text">
             ES <span className="text-ch-yellow">→</span> ClickHouse Converter
           </span>
-          <span className="text-xs text-ch-muted">
-            Elasticsearch _mapping to ClickHouse DDL
-          </span>
+          <span className="text-xs text-ch-muted">Elasticsearch _mapping to ClickHouse DDL</span>
         </div>
         <div className="ml-auto flex items-center gap-3">
           <div className="hidden h-1.5 w-24 rounded-full bg-ch-yellow/80 sm:block" aria-hidden />

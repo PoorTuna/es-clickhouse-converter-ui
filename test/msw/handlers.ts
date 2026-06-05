@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
 export const handlers = [
+  http.get('/health', () => HttpResponse.json({ status: 'ok' })),
   http.post('/convert', async ({ request }) => {
     const body = (await request.json()) as { index_name: string; mapping: unknown };
     if (!body.mapping || typeof body.mapping !== 'object') {

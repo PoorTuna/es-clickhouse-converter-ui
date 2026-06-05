@@ -6,8 +6,7 @@ import { fieldsFromText, parseMapping } from '@/lib/extractFields';
 import { useWizardStore } from '@/store/wizardStore';
 
 export function InputStep() {
-  const { mappingText, indexName, setMappingText, setIndexName, loadSample } =
-    useWizardStore();
+  const { mappingText, indexName, setMappingText, setIndexName, loadSample } = useWizardStore();
 
   const parsed = useMemo(() => parseMapping(mappingText), [mappingText]);
   const fields = useMemo(() => fieldsFromText(mappingText), [mappingText]);

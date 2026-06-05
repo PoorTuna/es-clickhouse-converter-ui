@@ -36,12 +36,12 @@ needs no CORS configuration.
 
 ## Scripts
 
-| Script            | Description                                          |
-| ----------------- | ---------------------------------------------------- |
-| `npm run dev`     | Dev server with hot reload and backend proxy         |
-| `npm run build`   | Type-check and build the production bundle to `dist/` |
-| `npm run preview` | Serve the production build locally                   |
-| `npm run test`    | Run the test suite (Vitest)                          |
+| Script            | Description                                                   |
+| ----------------- | ------------------------------------------------------------- |
+| `npm run dev`     | Dev server with hot reload and backend proxy                  |
+| `npm run build`   | Type-check and build the production bundle to `dist/`         |
+| `npm run preview` | Serve the production build locally                            |
+| `npm run test`    | Run the test suite (Vitest)                                   |
 | `npm run gen:api` | Regenerate API types from a running backend's `/openapi.json` |
 
 ## Workflow
@@ -102,7 +102,7 @@ To attach the UI to an existing backend stack instead, add the service to that s
 ui:
   build: ../ch_converter_ui
   ports:
-    - "8080:80"
+    - '8080:80'
   depends_on:
     - converter
 ```

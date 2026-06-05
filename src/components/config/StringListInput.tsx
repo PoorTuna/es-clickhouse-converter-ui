@@ -21,6 +21,8 @@ export function StringListInput({
 }: StringListInputProps) {
   const [draft, setDraft] = useState('');
   const listId = useId();
+  const inputId = useId();
+  const hintId = useId();
 
   const add = (raw: string) => {
     const v = raw.trim();
@@ -40,7 +42,7 @@ export function StringListInput({
 
   return (
     <div>
-      <Label>{label}</Label>
+      <Label htmlFor={inputId}>{label}</Label>
       {values.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1.5">
           {values.map((v) => (
@@ -62,9 +64,11 @@ export function StringListInput({
         </div>
       )}
       <Input
+        id={inputId}
         list={options.length ? listId : undefined}
         value={draft}
         placeholder={placeholder ?? 'Type a field, Enter to add'}
+        aria-describedby={hint ? hintId : undefined}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={onKeyDown}
         onBlur={() => draft && add(draft)}
@@ -76,7 +80,7 @@ export function StringListInput({
           ))}
         </datalist>
       )}
-      {hint && <Hint>{hint}</Hint>}
+      {hint && <Hint id={hintId}>{hint}</Hint>}
     </div>
   );
 }

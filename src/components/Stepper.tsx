@@ -17,8 +17,7 @@ export function Stepper() {
   const current = STEP_ORDER.indexOf(step);
 
   // Same gate the footer enforces: leave Input only with valid mapping + name.
-  const canLeaveInput =
-    parseMapping(mappingText) !== null && indexName.trim().length > 0;
+  const canLeaveInput = parseMapping(mappingText) !== null && indexName.trim().length > 0;
   // Input is always reachable; Config/Result need the input gate satisfied.
   const reachable = (i: number) => i === 0 || canLeaveInput;
 
@@ -28,6 +27,7 @@ export function Stepper() {
         const done = i < current;
         const active = i === current;
         const clickable = reachable(i) && !active;
+        const blocked = !reachable(i);
         return (
           <div key={s} className="flex items-center gap-2">
             <button
@@ -35,6 +35,10 @@ export function Stepper() {
               onClick={() => clickable && setStep(s)}
               disabled={!clickable}
               aria-current={active ? 'step' : undefined}
+              aria-disabled={!clickable}
+              aria-label={
+                blocked ? `${LABELS[s]} — enter a valid mapping and table name first` : LABELS[s]
+              }
               className={cn(
                 'flex items-center gap-2 rounded-full px-1.5 py-1 transition-colors',
                 clickable && 'cursor-pointer hover:bg-ch-panel-2',
@@ -52,10 +56,7 @@ export function Stepper() {
                 {done ? <Check size={14} strokeWidth={3} /> : i + 1}
               </span>
               <span
-                className={cn(
-                  'text-sm',
-                  active ? 'font-medium text-ch-text' : 'text-ch-muted',
-                )}
+                className={cn('text-sm', active ? 'font-medium text-ch-text' : 'text-ch-muted')}
               >
                 {LABELS[s]}
               </span>

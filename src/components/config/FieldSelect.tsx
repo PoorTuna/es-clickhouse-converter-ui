@@ -19,14 +19,18 @@ export function FieldSelect({
   onChange,
 }: FieldSelectProps) {
   const listId = useId();
+  const inputId = useId();
+  const hintId = useId();
   return (
     <div>
-      <Label>{label}</Label>
+      <Label htmlFor={inputId}>{label}</Label>
       <Input
+        id={inputId}
         list={listId}
         className="font-mono"
         placeholder={placeholder}
         value={value ?? ''}
+        aria-describedby={hint ? hintId : undefined}
         onChange={(e) => onChange(e.target.value || null)}
       />
       <datalist id={listId}>
@@ -34,7 +38,7 @@ export function FieldSelect({
           <option key={o} value={o} />
         ))}
       </datalist>
-      {hint && <Hint>{hint}</Hint>}
+      {hint && <Hint id={hintId}>{hint}</Hint>}
     </div>
   );
 }

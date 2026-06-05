@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Check, Copy, Download, Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AlertCircle, Check, Copy, Download, Loader2, RefreshCw } from 'lucide-react';
 import { Button, Card } from '../ui';
 import { SqlViewer } from '../editors/SqlViewer';
 import { WarningsPanel, SuggestionsPanel } from '../result/AdvisoryPanel';
@@ -15,12 +15,9 @@ export function ResultStep() {
   const [copied, setCopied] = useState(false);
 
   // Debounce the inputs so editing config re-converts at most ~every 400ms.
-  const payloadKey = useDebounce(
-    JSON.stringify({ mappingText, indexName, config }),
-    400,
-  );
+  const payloadKey = useDebounce(JSON.stringify({ mappingText, indexName, config }), 400);
 
-  useEffect(() => {
+  const runConvert = useCallback(() => {
     const mapping = parseMapping(mappingText);
     if (!mapping || !indexName.trim()) return;
     mutate({
@@ -28,9 +25,13 @@ export function ResultStep() {
       mapping: mapping as Record<string, unknown>,
       config: configToPayload(config),
     });
-    // payloadKey is the debounced trigger; other deps are read fresh inside.
+  }, [mappingText, indexName, config, mutate]);
+
+  useEffect(() => {
+    runConvert();
+    // payloadKey is the debounced trigger; runConvert reads fresh values.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payloadKey, mutate]);
+  }, [payloadKey]);
 
   const ddl = data?.ddl ?? '';
   const fileName = useMemo(
@@ -55,9 +56,19 @@ export function ResultStep() {
   };
 
   const backendError = error?.message ?? data?.error ?? null;
+  const status = isPending
+    ? 'Converting…'
+    : backendError
+      ? `Conversion failed: ${backendError}`
+      : ddl
+        ? 'DDL generated'
+        : '';
 
   return (
     <div className="space-y-4">
+      <p role="status" aria-live="polite" className="sr-only">
+        {status}
+      </p>
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between border-b border-ch-border px-4 py-3">
           <div className="flex items-center gap-2 text-sm">
@@ -76,9 +87,12 @@ export function ResultStep() {
         </div>
 
         {backendError ? (
-          <div className="flex items-start gap-2 px-4 py-4 text-sm text-ch-danger">
+          <div className="flex items-start gap-2 px-4 py-4 text-sm text-ch-danger" role="alert">
             <AlertCircle size={16} className="mt-0.5 shrink-0" />
-            <span>{backendError}</span>
+            <span className="flex-1">{backendError}</span>
+            <Button variant="outline" onClick={runConvert} disabled={isPending}>
+              <RefreshCw size={15} /> Retry
+            </Button>
           </div>
         ) : (
           <SqlViewer value={ddl} />
