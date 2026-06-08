@@ -1,12 +1,17 @@
-import { useMemo } from 'react';
-import { AlertCircle, CheckCircle2, FileJson, Upload } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { AlertCircle, CheckCircle2, Database, FileJson, Upload } from 'lucide-react';
 import { Card, Hint, Input, Label, Button } from '../ui';
 import { JsonEditor } from '../editors/JsonEditor';
+import { EsConnectForm } from '../es/EsConnectForm';
+import { EsBrowser } from '../es/EsBrowser';
 import { fieldsFromText, parseMapping } from '@/lib/extractFields';
 import { useWizardStore } from '@/store/wizardStore';
+import { useEsStore } from '@/store/esStore';
 
 export function InputStep() {
   const { mappingText, indexName, setMappingText, setIndexName, loadSample } = useWizardStore();
+  const esConnected = useEsStore((s) => s.sessionId !== null);
+  const [showEs, setShowEs] = useState(false);
 
   const parsed = useMemo(() => parseMapping(mappingText), [mappingText]);
   const fields = useMemo(() => fieldsFromText(mappingText), [mappingText]);
@@ -17,8 +22,23 @@ export function InputStep() {
     setMappingText(await file.text());
   };
 
+  const showEsPanel = showEs || esConnected;
+
   return (
     <div className="space-y-5">
+      <div className="flex justify-end">
+        <Button variant="ghost" onClick={() => setShowEs((v) => !v)}>
+          <Database size={15} /> {showEsPanel ? 'Hide Elasticsearch' : 'Connect to Elasticsearch'}
+        </Button>
+      </div>
+
+      {showEsPanel && (
+        <div className="space-y-4">
+          <EsConnectForm />
+          {esConnected && <EsBrowser />}
+        </div>
+      )}
+
       <Card className="p-5">
         <Label htmlFor="index-name">ClickHouse table name</Label>
         <Input

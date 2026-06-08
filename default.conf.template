@@ -31,4 +31,11 @@ server {
         proxy_pass $converter_backend$request_uri;
         proxy_set_header Host $host;
     }
+    # Live-Elasticsearch connect/browse/import endpoints.
+    location /es {
+        resolver ${CONVERTER_RESOLVER} ipv6=off valid=10s;
+        set $converter_backend "${CONVERTER_BACKEND_URL}";
+        proxy_pass $converter_backend$request_uri;
+        proxy_set_header Host $host;
+    }
 }

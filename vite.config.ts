@@ -16,6 +16,7 @@ export default defineConfig({
     proxy: {
       '/convert': BACKEND,
       '/health': BACKEND,
+      '/es': BACKEND,
     },
   },
   test: {

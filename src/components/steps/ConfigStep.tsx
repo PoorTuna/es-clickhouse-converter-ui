@@ -9,7 +9,7 @@ import { fieldsFromText } from '@/lib/extractFields';
 import { useWizardStore } from '@/store/wizardStore';
 
 export function ConfigStep() {
-  const { mappingText, config, patchConfig } = useWizardStore();
+  const { mappingText, config, patchConfig, importNotes } = useWizardStore();
   const { paths, dateFields, objectRoots, jsonRoots, nestedRoots } = useMemo(
     () => fieldsFromText(mappingText),
     [mappingText],
@@ -36,6 +36,19 @@ export function ConfigStep() {
         All knobs are optional — leave them blank to let the converter choose. Field names
         autocomplete from your mapping.
       </p>
+
+      {importNotes.length > 0 && (
+        <div className="rounded-md border border-ch-suggestion/40 bg-ch-suggestion/10 p-3">
+          <p className="mb-1 text-xs font-medium text-ch-suggestion">
+            From the imported ILM policy
+          </p>
+          <ul className="list-disc space-y-0.5 pl-5 text-xs text-ch-text">
+            {importNotes.map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <ConfigTierSorting
         config={config}

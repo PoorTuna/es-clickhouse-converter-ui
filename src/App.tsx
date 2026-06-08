@@ -7,9 +7,11 @@ import { InputStep } from './components/steps/InputStep';
 import { ConfigStep } from './components/steps/ConfigStep';
 import { ResultStep } from './components/steps/ResultStep';
 import { useWizardStore } from './store/wizardStore';
+import { useEsSessionCleanup } from './lib/useEsSessionCleanup';
 
 export default function App() {
   const step = useWizardStore((s) => s.step);
+  useEsSessionCleanup();
 
   return (
     <div className="flex min-h-full flex-col">

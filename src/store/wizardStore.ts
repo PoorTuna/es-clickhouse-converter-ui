@@ -57,12 +57,15 @@ interface WizardState {
   indexName: string;
   mappingText: string;
   config: WizardConfig;
+  /** Advisory notes from a live ES import (e.g. ILM hints); transient, never persisted. */
+  importNotes: string[];
   setStep: (step: Step) => void;
   next: () => void;
   back: () => void;
   setMappingText: (text: string) => void;
   setIndexName: (name: string) => void;
   patchConfig: (partial: Partial<WizardConfig>) => void;
+  setImportNotes: (notes: string[]) => void;
   loadSample: () => void;
   reset: () => void;
 }
@@ -74,6 +77,7 @@ export const useWizardStore = create<WizardState>()(
       indexName: '',
       mappingText: '',
       config: DEFAULT_CONFIG,
+      importNotes: [],
       setStep: (step) => set({ step }),
       next: () => {
         const i = STEP_ORDER.indexOf(get().step);
@@ -86,8 +90,16 @@ export const useWizardStore = create<WizardState>()(
       setMappingText: (mappingText) => set({ mappingText }),
       setIndexName: (indexName) => set({ indexName }),
       patchConfig: (partial) => set((s) => ({ config: { ...s.config, ...partial } })),
+      setImportNotes: (importNotes) => set({ importNotes }),
       loadSample: () => set({ mappingText: SAMPLE_MAPPING_TEXT, indexName: SAMPLE_INDEX_NAME }),
-      reset: () => set({ step: 'input', indexName: '', mappingText: '', config: DEFAULT_CONFIG }),
+      reset: () =>
+        set({
+          step: 'input',
+          indexName: '',
+          mappingText: '',
+          config: DEFAULT_CONFIG,
+          importNotes: [],
+        }),
     }),
     {
       name: 'ch-converter-wizard',
